@@ -1,3 +1,59 @@
-﻿@page
-@{
+﻿@page "/todos"
+@using BlazorSample.Shared
+@inject HttpClient Http
+
+<h1>Todos list</h1>
+
+<EditForm Model="@_newTodo" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <label for="title">
+        <InputText id="title" @bind-Value="_newTodo.Title" />
+    </label>
+
+    <button type="submit">Submit</button>
+</EditForm>
+
+@if (_todos == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <tbody>
+        @foreach (var todo in _todos)
+        {
+            <tr>
+                <td>@todo.Status.ToString()</td>
+                <td>@todo.Title</td>
+            </tr>
+        }
+        </tbody>
+    </table> 
+}
+
+@code {
+    private Todo[] _todos;
+
+    private Todo _newTodo = new Todo();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _todos = await this.FetchTodos();
+    }
+
+    private async void HandleValidSubmit()
+    {
+        var response = await Http.PostAsJsonAsync("Todos", _newTodo);
+        response.EnsureSuccessStatusCode();
+        _todos = await this.FetchTodos();
+        _newTodo = new Todo();
+    }
+
+    private Task<Todo[]> FetchTodos()
+    {
+        return Http.GetFromJsonAsync<Todo[]>("Todos");
+    }
 }
